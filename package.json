@@ -14,7 +14,7 @@
   "keywords": [],
   "author": "Marcelo Saldanha",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "bugs": {
     "url": "https://github.com/marcelosfilho13/backend-projectweb/issues"
   },
