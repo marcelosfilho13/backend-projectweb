@@ -4,7 +4,7 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../generated/prisma"
 }
 
@@ -43,7 +43,7 @@ model Class {
   courses_Id Int @map("courses_Id")
 
   course Course @relation(fields: [courses_Id], references: [id], onDelete: Cascade)
-  student Student[]
+  students Student[]
 
   @@map("classes")
 }
