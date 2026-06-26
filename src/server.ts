@@ -1,16 +1,20 @@
-import express from 'express';
+import express from "express";
+import cors from "cors";
+import { routes } from "./routes";
 
 const app = express();
 
-app.get('/', (req, res) => {
-    res.json('Rota inicial');
-    res.send('Hello, World!');
-});
+//* Middlerares globais
+app.use(cors());
+app.use(express.json()); //* Permite que o Express entenda requisições com corpo em JSON */
 
-app.get('/users', (req, res) => {
-    res.json('Rota de usuários');
-});
+//* Vicunle as rotas criadas ao servidor Express
+app.use(routes);
 
-app.listen(3000, () => {
-    console.log('Servidor rodando na porta 3000');
+//* Rota protegida: Só entra quem tem o Token JWT válido
+const PORT = process.env.PORT || 3333;
+
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor backend inicializado com sucesso!`);
+  console.log(`📡 Escutando requisições na URL: http://localhost:${PORT}`);
 });
