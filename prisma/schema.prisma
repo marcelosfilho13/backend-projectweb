@@ -4,10 +4,101 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model User {
+  id Int @id @default(autoincrement())
+  name String
+  email String @unique
+  password String
+  perfil String
+  dataCreated DateTime @default(now()) @map("data_created")
+
+  incidents Occurrence[]
+  nextSteps EducationalGuidance[]
+
+  @@map("users")
+}
+
+model Course {
+  id Int @id @default(autoincrement())
+  name String
+  description String
+  dataCreated DateTime @default(now()) @map("data_created")
+
+  classes Class[]
+
+  @@map("courses")
+}
+
+model Class {
+  id Int @id @default(autoincrement())
+  name String
+  courses_Id Int @map("courses_Id")
+
+  course Course @relation(fields: [courses_Id], references: [id], onDelete: Cascade)
+  students Student[]
+
+  @@map("classes")
+}
+
+model Student {
+  id Int @id @default(autoincrement())
+  name String
+  class_Id Int @map("class_Id")
+
+  class Class @relation(fields: [class_Id], references: [id], onDelete: Cascade)
+
+  responsibles Responsible[]
+  occurrences  Occurrence[]
+  educationalGuidances EducationalGuidance[]
+
+  @@map("students")
+}
+
+model Responsible {
+  id Int @id @default(autoincrement())
+  name String
+  kinship String
+  telephone String
+  email String
+  students_Id Int @map("students_Id")
+
+  students Student @relation(fields: [students_Id], references: [id], onDelete: Cascade)
+
+  @@map("responsibles")
+}
+
+model Occurrence {
+  id Int @id @default(autoincrement())
+  type String
+  gravity String
+  description String @db.Text 
+  registrationDate DateTime @default(now()) @map("registration_date")
+  students_Id Int @map("students_Id")
+  users_Id Int @map("users_Id")
+
+  students Student @relation(fields: [students_Id], references: [id], onDelete: Cascade)
+  users User @relation(fields: [users_Id], references: [id], onDelete: Cascade)
+
+  @@map("occurrences")
+}
+
+model EducationalGuidance {
+  id Int @id @default(autoincrement())
+  description String @db.Text
+  registrationDate DateTime @default(now()) @map("registration_date")
+  users_Id Int @map("users_Id")
+  students_Id Int @map("students_Id")
+
+  users User @relation(fields: [users_Id], references: [id])
+  students Student @relation(fields: [students_Id], references: [id], onDelete: Cascade)
+
+  @@map("educational_guidances")
 }
