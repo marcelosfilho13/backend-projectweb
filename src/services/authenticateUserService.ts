@@ -27,12 +27,12 @@ export class AuthenticateUserService {
             throw new Error("Usuário ou senha incorretos.");
         }
 
-        const secret = process.env.JWT_SECRET
+        const secret = process.env.JWT_SECRET as string;
         const token = jwt.sign(
             {perfil: user.perfil},
             secret,
             {
-                subject: user.id,
+                subject: String(user.id),
                 expiresIn: "1d",
             }
         );

@@ -20,7 +20,7 @@ export function ensureAuthenticated(req: Request, res: Response, next: NextFunct
     }
 
     try{
-        const secret = process.env.JWT_SECRET;
+        const secret = process.env.JWT_SECRET as string;
         const decoded = jwt.verify(token, secret);
 
         console.log(`🔒 [SERVER LOG]: Usuário ID ${decoded.sub} autenticado com sucesso via JWT!`);
