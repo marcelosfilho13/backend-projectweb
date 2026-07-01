@@ -5,7 +5,9 @@ import { routes } from "./routes";
 const app = express();
 
 //* Middlerares globais
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || "*", //* Permite que qualquer aplicação acesse a API
+}));
 app.use(express.json()); //* Permite que o Express entenda requisições com corpo em JSON */
 
 //* Vicunle as rotas criadas ao servidor Express
