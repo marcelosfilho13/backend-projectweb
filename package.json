@@ -2,7 +2,7 @@
   "name": "backend-projectweb",
   "version": "1.0.0",
   "description": "",
-  "main": "server.js",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "ts-node-dev -r dotenv/config --inspect --transpile-only --ignore-watch node_modules src/server.ts",
