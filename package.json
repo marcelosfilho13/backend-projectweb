@@ -5,7 +5,11 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "ts-node-dev -r dotenv/config --inspect --transpile-only --ignore-watch node_modules src/server.ts"
+    "dev": "ts-node-dev -r dotenv/config --inspect --transpile-only --ignore-watch node_modules src/server.ts",
+    "build": "tsc",
+    "prisma:generate": "npx prisma generate",
+    "prisma:migrate": "npx prisma migrate deploy",
+    "start": "node dist/server.js"  
   },
   "repository": {
     "type": "git",
