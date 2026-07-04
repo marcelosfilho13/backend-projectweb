@@ -1,10 +1,14 @@
 import {Router} from "express";
+import { AuthController } from "../controllers/authController";
+import { ensureAuthenticated } from "../middlewares/ensureAuthenticated";
 
 const authRoutes = Router();
+const authController = new AuthController();
 
-authRoutes.post("/login", (req, res) => {
-    // Lógica de autenticação do usuário
-    return res.status(200).json({ message: "Usuário autenticado com sucesso!" });
-});
+//* Rota Pública (Qualquer um pode tentar logar)
+authRoutes.post("/login", authController.login);
+
+//* Rota Protegida (Só quem tem um token válido pode cadastrar um novo servidor)
+authRoutes.post("/register", ensureAuthenticated, authController.register);
 
 export { authRoutes };

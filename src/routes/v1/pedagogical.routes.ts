@@ -14,7 +14,7 @@ pedagogicalRoutes.get(
     pedagogicalController.getQueue
 );
 
-//* POST api/v1/´pedagogical/forwarding - Registro restrito ao Pedagógico
+//* POST api/v1/pedagogical/forwarding - Registro restrito ao Pedagógico
 pedagogicalRoutes.post(
     "/forwarding",
     // ensureAuthenticated

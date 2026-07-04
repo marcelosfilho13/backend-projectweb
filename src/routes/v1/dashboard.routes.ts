@@ -1,6 +1,6 @@
 import {Router} from "express";
 import { DashboardController } from "../../controllers/dashboardController";
-//!import {checkRole} from "../../middlewares/checkRole";
+import {checkRole} from "../../middlewares/rbac";
 
 const dashboardRoutes = Router();
 const dashboardController = new DashboardController();
@@ -9,7 +9,7 @@ const dashboardController = new DashboardController();
 dashboardRoutes.get(
   "/stats",
   // ensureAuthenticated, // Descomente para ativar a validação do Token JWT real
-  //!checkRole(["Administrador", "Setor Pedagógico", "Servidor"]), // Permissão para todos os setores mapeados
+  checkRole(["Administrador", "Setor Pedagógico", "Servidor"]), // Permissão para todos os setores mapeados
   dashboardController.getStats
 );
 

@@ -2,23 +2,21 @@ import { prisma } from "../database/prismaClient";
 import bcrypt from "bcrypt";
 
 interface IRequest {
-  name: string;
-  email: string;
-  password: string;
-  perfil: string;
+    name: string;
+    email: string;
+    password: string;
+    perfil: string;
 }
 
 export class CreateUserService {
-  public async execute({ name, email, password, perfil }: IRequest) {
+    public async execute({ name, email, password, perfil }: IRequest) {
     //* verifica se o e-mail já está cadastrado no banco de dados.
     const userAlreadyExists = await prisma.user.findUnique({
-      where: {
-        email,
-      },
+        where: {email,},
     });
 
     if (userAlreadyExists) {
-      throw new Error("Este e-mail já está cadastrado.");
+        throw new Error("Este e-mail já está cadastrado no sistema.");
     }
 
     //* Criptografar a senha do usuário antes de armazená-la no banco de dados.
@@ -26,12 +24,12 @@ export class CreateUserService {
 
     // * Salvar no banco de dados o usuário com a senha criptografada.
     const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        perfil,
-      },
+        data: {
+            name,
+            email,
+            password: hashedPassword,
+            perfil, //* Armazena o perfil: "Setor Pedagógico" || "Servidor"
+        },
     });
 
     //*  Por segurança, a senha não deve ser retornada na resposta.

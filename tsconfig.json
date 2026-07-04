@@ -10,7 +10,11 @@
         "forceConsistentCasingInFileNames": true, /* Evita bugs de maiúsculas/minúsculas entre OS */
         "strict": true, /* Ativa checagem rígida de tipos */
         "skipLibCheck": true, /* Ignora checagem de tipos no node_modules para dar velocidade */
-        "ignoreDeprecations": "6.0"
+        "ignoreDeprecations": "6.0",
+        "typeRoots": [
+            "./node_modules/@types",
+            "./src/@types"
+        ],
     },
     "include": [
         "src/**/*"

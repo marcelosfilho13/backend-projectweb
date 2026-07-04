@@ -19,13 +19,24 @@ export function ensureAuthenticated(req: Request, res: Response, next: NextFunct
         return res.status(401).json({ error: "Token mal formatado" });
     }
 
-    try{
+    try {
         const secret = process.env.JWT_SECRET as string;
-        const decoded = jwt.verify(token, secret);
 
-        console.log(`🔒 [SERVER LOG]: Usuário ID ${decoded.sub} autenticado com sucesso via JWT!`);
+        //* Mapeamos os tipos esperados do payload do token decodificado
+        const decoded = jwt.verify(token, secret) as { id: number; perfil: string };
+
+        //* Injetamos com sucesso o id como número real no objeto 'req'
+        req.user = {
+            id: Number(decoded.id), // Garante que seja lido como número
+            perfil: decoded.perfil,
+        };
+
+        console.log(
+            `🔒 [SERVER LOG]: Usuário ID ${decoded.id} (${decoded.perfil}) autenticado com sucesso!`,
+        );
+
         return next();
     } catch (err) {
-        return res.status(401).json({ error: "Token inválido" });
+        return res.status(401).json({ error: "Token inválido ou expirado" });
     }
 }
