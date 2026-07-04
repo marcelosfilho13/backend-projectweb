@@ -1,4 +1,24 @@
-import "dotenv/config"; 
+import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
+
+// Certifique-se de que a variável de ambiente está carregada
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error("DATABASE_URL não está configurada no arquivo .env");
+}
+
+// Cria o pool de conexões do driver nativo 'pg'
+const pool = new Pool({ connectionString });
+
+// Instancia o adaptador oficial do Prisma para o PostgreSQL
+const adapter = new PrismaPg(pool);
+
+// Injeta o adaptador nas opções do PrismaClient (obrigatório no Prisma 7+)
+export const prisma = new PrismaClient({ adapter });
+
+/*
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../../generated/prisma";
 import { Pool } from "pg";
@@ -22,3 +42,4 @@ const adapter = new PrismaPg(pool);
 
 // Instancia o Prisma passando o adaptador pronto
 export const prisma = new PrismaClient({ adapter });
+*/
