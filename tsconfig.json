@@ -1,16 +1,22 @@
 {
     "compilerOptions": {
         "target": "es2022", /* Versão moderna do JavaScript */
-        "module": "node16", /* CORREÇÃO TS5110: Casado com o moduleResolution */
-        "moduleResolution": "node16", /* Mantém o padrão moderno exigido pelas novas versões do TS */
+        "module": "esnext", /* CORREÇÃO TS5110: Casado com o moduleResolution */
+        "moduleResolution": "bundler", /* Mantém o padrão moderno exigido pelas novas versões do TS */
+        "target": "ES2023",
         "rootDir": "./src", /* O ponto de partida do seu código */
         "outDir": "./dist", /* Pasta de compilação final */
         "esModuleInterop": true, /* Permite interoperabilidade de módulos */
         "forceConsistentCasingInFileNames": true, /* Evita bugs de maiúsculas/minúsculas entre OS */
         "strict": true, /* Ativa checagem rígida de tipos */
-        "skipLibCheck": true /* Ignora checagem de tipos no node_modules para dar velocidade */
+        "skipLibCheck": true, /* Ignora checagem de tipos no node_modules para dar velocidade */
+        "ignoreDeprecations": "6.0"
     },
     "include": [
         "src/**/*"
-    ]
+    ],
+    "ts-node": {
+        "esm": true,
+        "experimentalSpecifierResolution": "node"
+    }
 }

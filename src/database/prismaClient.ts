@@ -1,4 +1,17 @@
-import { PrismaClient } from "@prisma/client";
+console.log("teste de entrada");
+import "dotenv/config";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "../../generated/prisma";
+
+const connectionString = `${process.env.DATABASE_URL}`;
+
+const adapter = new PrismaPg({ connectionString });
+const prisma = new PrismaClient({ adapter });
+
+export { prisma };
+/*
+console.log("teste de entrada")
+import { PrismaClient } from "../../generated/prisma";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 
@@ -6,7 +19,7 @@ import { Pool } from "pg";
 const connectionString = process.env.DATABASE_URL;
 
 if (!connectionString) {
-  throw new Error("DATABASE_URL não está configurada no arquivo .env");
+    throw new Error("DATABASE_URL não está configurada no arquivo .env");
 }
 
 // Cria o pool de conexões do driver nativo 'pg'

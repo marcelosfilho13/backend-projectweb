@@ -1,6 +1,6 @@
+import { prisma } from "../database/prismaClient";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { prisma } from "../database/prismaClient";
 
 interface IRequest {
   email: string;
@@ -8,42 +8,38 @@ interface IRequest {
 }
 
 export class AuthenticateUserService {
-    public async execute({ email, password }: IRequest) {
-        //* Verifica se o usuário existe no banco de dados.
-        const user = await prisma.user.findUnique({
-            where: {
-                email,
-            },
-        });
+  public async execute({ email, password }: IRequest) {
+    //* Verifica se o usuário existe no banco de dados.
+    const user = await prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
 
-        if (!user) {
-            throw new Error("Usuário ou senha incorretos.");
-        }
-
-        //* Comparar senha enviada com senha criptografada no banco de dados.
-        const passwordMatch = await bcrypt.compare(password, user.password);
-        
-        if (!passwordMatch) {
-            throw new Error("Usuário ou senha incorretos.");
-        }
-
-        const secret = process.env.JWT_SECRET as string;
-        const token = jwt.sign(
-            {perfil: user.perfil},
-            secret,
-            {
-                subject: String(user.id),
-                expiresIn: "1d",
-            }
-        );
-
-        return {
-            user: {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-            },
-            token,
-        };
+    if (!user) {
+      throw new Error("Usuário ou senha incorretos.");
     }
+
+    //* Comparar senha enviada com senha criptografada no banco de dados.
+    const passwordMatch = await bcrypt.compare(password, user.password);
+
+    if (!passwordMatch) {
+      throw new Error("Usuário ou senha incorretos.");
+    }
+
+    const secret = process.env.JWT_SECRET as string;
+    const token = jwt.sign({ perfil: user.perfil }, secret, {
+      subject: String(user.id),
+      expiresIn: "1d",
+    });
+
+    return {
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+      },
+      token,
+    };
+  }
 }

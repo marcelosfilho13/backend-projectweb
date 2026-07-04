@@ -37,13 +37,13 @@ export class PedagogicalController {
             });
 
             return res.status(201).json({
-                message: "Encaminhamento pedagógico registrado com sucesso";
+                message: "Encaminhamento pedagógico registrado com sucesso",
                 data: forwarding
             });
         } catch(error: any) {
             console.error("🚨 Error in PedagogicalController.storeForwarding:", error);
 
-            if (error.message === "Student not found") {
+            if (error.message === "Estudante não encontrado") {
                 return res.status(404).json({ error: "O estudante alvo deste encaminhamento não foi localizado." });
             } 
 
