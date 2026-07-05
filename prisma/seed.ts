@@ -1,18 +1,16 @@
-import {PrismaClient} from "../generated/prisma";
 import { Pool } from "pg";
-import { PrismaPg } from "@prisma/adapter-pg";
-
 import bcrypt from "bcrypt";
+import dotenv from "dotenv";
+
+// Carrega o arquivo .env
+dotenv.config();
 
 const connectionString = `${process.env.DATABASE_URL}`;
 const pool = new Pool({ connectionString });
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log("🌱 Starting database seeding process...");
+  console.log("🌱 Starting database seeding process via Raw SQL...");
 
-  // Garante que a URL do banco está visível para o processo
   if (!process.env.DATABASE_URL) {
     throw new Error(
       "🚨 Erro: A variável DATABASE_URL não foi encontrada no ambiente!",
@@ -20,66 +18,54 @@ async function main() {
   }
 
   console.log("🔐 Criptografando senha de teste...");
-  // * Criptografar senha padrão de teste para o usuário admin
   const hashedPassword = await bcrypt.hash("Sade@123", 10);
 
-  console.log("👥 Verificando/Criando usuário ADMIN...");
-  const adminUser = await prisma.user.upsert({
-    where: { email: "teste01@teste.com" },
-    update: {},
-    create: {
-      name: "Marilia Martins",
-      email: "teste01@teste.com",
-      password: hashedPassword,
-      perfil: "Administrador",
-    },
-  });
-
-  console.log(
-    `👤 User [${adminUser.perfil}] checked/created: ${adminUser.email}`,
+  // 1. Inserir ou Atualizar ADMIN
+  console.log("👥 Criando/Verificando usuário ADMIN...");
+  await pool.query(
+    `
+    INSERT INTO users (name, email, password, perfil, status, created_at)
+    VALUES ('Marilia Martins', 'teste01@teste.com', $1, 'Administrador', 'ATIVO', NOW())
+    ON CONFLICT (email) DO UPDATE 
+    SET name = EXCLUDED.name, password = EXCLUDED.password, perfil = EXCLUDED.perfil, status = 'ATIVO';
+  `,
+    [hashedPassword],
   );
+  console.log("👤 User [Administrador] pronto e ATIVO: teste01@teste.com");
 
-  console.log(`✅ Usuário PATIO pronto: ${adminUser.email}`);
-
-  console.log("👥 Verificando/Criando usuário PEDAGOGICO...");
-
-  const pedagogicalUser = await prisma.user.upsert({
-    where: { email: "teste02@teste.com" },
-    update: {},
-    create: {
-      name: "Marcelo Saldanha",
-      email: "teste02@teste.com",
-      password: hashedPassword,
-      perfil: "Setor Pedagógico",
-    },
-  });
-
-  console.log(
-    `👤 User [${pedagogicalUser.perfil}] checked/created: ${pedagogicalUser.email}`,
+  // 2. Inserir ou Atualizar PEDAGOGICO
+  console.log("👥 Criando/Verificando usuário PEDAGOGICO...");
+  await pool.query(
+    `
+    INSERT INTO users (name, email, password, perfil, status, created_at)
+    VALUES ('Marcelo Saldanha', 'teste02@teste.com', $1, 'Setor Pedagógico', 'ATIVO', NOW())
+    ON CONFLICT (email) DO UPDATE 
+    SET name = EXCLUDED.name, password = EXCLUDED.password, perfil = EXCLUDED.perfil, status = 'ATIVO';
+  `,
+    [hashedPassword],
   );
+  console.log("👤 User [Setor Pedagógico] pronto e ATIVO: teste02@teste.com");
 
-  const serverUser = await prisma.user.upsert({
-    where: { email: "teste03@teste.com" },
-    update: {},
-    create: {
-      name: "João Gomes",
-      email: "teste03@teste.com",
-      password: hashedPassword,
-      perfil: "Servidor",
-    },
-  });
-
-  console.log(
-    `👤 User [${serverUser.perfil}] checked/created: ${serverUser.email}`,
+  // 3. Inserir ou Atualizar SERVIDOR
+  console.log("👥 Criando/Verificando usuário SERVIDOR...");
+  await pool.query(
+    `
+    INSERT INTO users (name, email, password, perfil, status, created_at)
+    VALUES ('João Gomes', 'teste03@teste.com', $1, 'Servidor', 'ATIVO', NOW())
+    ON CONFLICT (email) DO UPDATE 
+    SET name = EXCLUDED.name, password = EXCLUDED.password, perfil = EXCLUDED.perfil, status = 'ATIVO';
+  `,
+    [hashedPassword],
   );
+  console.log("👤 User [Servidor] pronto e ATIVO: teste03@teste.com");
 }
 
 main()
-    .catch((e) => {
-        console.error("❌ Error during database seeding:", e);
-        process.exit(1);
-    })
-    .finally(async () => {
-        await prisma.$disconnect();
-        console.log("✅ Database seeding process completed.");
-    });
+  .catch((e) => {
+    console.error("❌ Error during database seeding:", e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await pool.end();
+    console.log("✅ Database seeding process completed.");
+  });
