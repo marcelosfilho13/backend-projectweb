@@ -6,7 +6,7 @@ import { ensureAuthenticated } from "../../middlewares/ensureAuthenticated";
 const occurrenceRoutes = Router();
 const occurrenceController = new OccurrenceController();
 
-//* POST /api/v1/occurrences - Criar uma nova ocorrência disciplinar
+//* POST /api/v1/occurrences/create - Criar uma nova ocorrência disciplinar
 //* RF05 / RN01 / RN02: Ação exclusiva do perfil Administrador
 occurrenceRoutes.post(
   "/",

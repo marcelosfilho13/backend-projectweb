@@ -35,16 +35,22 @@ export class OccurrenceService {
         type: data.type,
         gravity: data.gravity,
         description: data.description,
-        measuresTaken: data.measuresTaken || "Nenhuma providência registrada inicialmente.",
-        students_Id: data.students_Id,
-        users_Id: data.users_Id,
-        status: "ABERTO", //* Inicializa com o padrão exigido pelo sistema
-        //* Mantém a flag caso exista no seu schema, usando a verificação corrigida
-        ...("alertForPedagogicalAction" in prisma.occurrence.fields
-          ? { alertForPedagogicalAction: isGrave }
-          : {}),
+        measuresTaken: data.measuresTaken, //* Adicionado conforme RF05
+        status: "ABERTA", //* Padrão do  enum
+
+        student: {
+          connect: {
+            id: Number(data.students_Id), // Conecta ao ID do aluno enviado
+          },
+        },
+
+        user: {
+          connect: {
+            id: Number(data.users_Id),
+          },
+        },
       },
-    });
+    } as any);
   }
 
   //* Tela 4 — Listar Ocorrências Registradas com Filtros
@@ -70,11 +76,16 @@ export class OccurrenceService {
     return await prisma.occurrence.findMany({
       where: whereCondition,
       include: {
-        students: {
+        student: {
           select: {
             name: true,
             registration: true,
-            course: { select: { name: true } },
+            class: {
+              select: {
+                name: true,
+                course: { select: { name: true } },
+              },
+            },
           },
         },
         user: {
@@ -84,7 +95,7 @@ export class OccurrenceService {
       orderBy: {
         id: "desc", //* Mais recentes primeiro
       },
-    });
+    } as any);
   }
 
   //* RN03 — Excluir Ocorrência
