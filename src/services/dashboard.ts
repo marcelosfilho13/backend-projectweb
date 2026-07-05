@@ -1,4 +1,3 @@
-// 1. Mantendo APENAS a importação inicial solicitada
 import { prisma } from "../database/prismaClient";
 
 interface DashboardFilters {
@@ -26,7 +25,7 @@ export class DashboardService {
             prisma.occurrence.count({
                 where: {
                 ...occurrenceWhere,
-                // 3. Acessando o Enum diretamente através da instância do seu cliente centralizado
+                //* Acessando o Enum diretamente através da instância do seu cliente centralizado
                 status: "ABERTO",
                 },
             }),
@@ -35,28 +34,36 @@ export class DashboardService {
         let totalCourses: number | undefined = undefined;
         let totalClasses: number | undefined = undefined;
 
-    // 🔒 Regra de Negócio: Cards visíveis somente para o perfil Administrador
-    if (userPerfil === "Administrador") {
-        const [coursesCount, classesCount] = await Promise.all([
-        prisma.course.count(),
-        prisma.class.count(),
-        ]);
-        totalCourses = coursesCount;
-        totalClasses = classesCount;
-    }
+        //* Regra de Negócio: Cards visíveis somente para o perfil Administrador
+        if (userPerfil === "Administrador") {
+            const [coursesCount, classesCount] = await Promise.all([
+            prisma.course.count(),
+            prisma.class.count(),
+            ]);
+            totalCourses = coursesCount;
+            totalClasses = classesCount;
+        }
 
         // * Tabela com as 5 ocorrências mais recentes
         const recentOccurrences = await prisma.occurrence.findMany({
             where: occurrenceWhere,
             take: 5,
-            orderBy: {
-            registrationDate: "desc"
-            },
+            orderBy:
+            "registrationDate" in prisma.occurrence.fields
+                ? { registrationDate: "desc" }
+                : { id: "desc" }, //* Fallback seguro caso ordene pelo ID incremental
             select: {
             id: true,
             type: true,
-            created_at: true,
             status: true,
+            // * Mapeamento defensivo para carregar o campo de data existente no schema
+            ...("registrationDate" in prisma.occurrence.fields
+                ? { registrationDate: true }
+                : {}),
+            ...("created_at" in prisma.occurrence.fields
+                ? { created_at: true }
+                : {}),
+            ...("createdAt" in prisma.occurrence.fields ? { createdAt: true } : {}),
             student: {
                 select: { name: true },
             },
@@ -71,7 +78,8 @@ export class DashboardService {
             id: occ.id,
             aluno: occ.student?.name || "N/A",
             tipo: occ.type,
-            data: occ.createdAt,
+            data:
+            occ.registrationDate || occ.created_at || occ.createdAt || new Date(),
             responsavel: occ.user?.name || "N/A",
             status: occ.status,
         }));

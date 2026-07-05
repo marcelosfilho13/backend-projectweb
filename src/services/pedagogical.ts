@@ -61,16 +61,16 @@ export class PedagogicalGuidanceService {
             throw new Error("Tabela de acompanhamento pedagógico não encontrada no Prisma Client.");
             }
 
-            //* Cria o registro de texto livre no histórico usando o modelo mapeado dinamicamente
+            //* RF08 - Cria o registro de texto livre no histórico usando o modelo mapeado dinamicamente
             const followUp = await guidanceModel.create({
-            data: {
-                description: data.description,
-                registrationDate: new Date(),
-                occurrences_Id: data.occurrences_Id,
-                students_Id: occurrenceExists.students_Id,
-                users_Id: data.users_Id,
-            },
-            include: { user: { select: { name: true } } }
+              data: {
+                description: data.description, //* O texto livre: "convocação dos responsáveis", "orientação disciplinar"...
+                registrationDate: new Date(), //* Data automática do registro
+                occurrences_Id: data.occurrences_Id, //* REQUISITO OBRIGATÓRIO: Aponta para a ocorrência específica
+                students_Id: occurrenceExists.students_Id, //* Vincula ao aluno dono da ocorrência automaticamente
+                users_Id: data.users_Id, //* Identifica quem registrou (Pedagógico ou Admin logado)
+              },
+              include: { user: { select: { name: true } } }, //* Já traz o nome do autor do registro para o histórico da tela
             });
             
             if (newStatus) {

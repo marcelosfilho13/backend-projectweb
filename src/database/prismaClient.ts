@@ -9,6 +9,7 @@ const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
 export { prisma };
+
 /*
 console.log("teste de entrada")
 import { PrismaClient } from "../../generated/prisma";

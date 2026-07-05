@@ -7,7 +7,7 @@ interface listStudentsFilters {
 }
 
 export class StudentService {
-  //* RF03 — Consulta de Alunos (Listagem do lado esquerdo da tela)
+    //* RF03 — Consulta de Alunos (Listagem do lado esquerdo da tela)
     async listStudents(filters: listStudentsFilters) {
     const whereCondition: any = {};
 
@@ -43,25 +43,50 @@ export class StudentService {
     return students;
     }
 
-    //* RF04 — Visualização da Ficha do Aluno (Detalhes do lado direito da tela)
+  //* RF04 — Visualização da Ficha do Aluno (Detalhes do lado direito da tela)
     async getStudentDetails(id: number) {
-    const student = await prisma.student.findUnique({
-        where: { id },
-        include: {
+    const includeCondition: any = {
         course: true,
         class: true,
         responsibles: true, //* Responsáveis (RF04)
         occurrences: {
-            orderBy: {
+        orderBy: {
             //* Tentativa dinâmica usando as colunas prováveis do banco mapeadas anteriormente
             [prisma.occurrence.fields ? "created_at" : "id"]: "desc",
-            },
-            include: {
+        },
+        include: {
             //* Inclui dados de acompanhamento/ciência para o card expansível do front-end
-            users: { select: { name: true } }, //* Responsável pela ocorrência
-            },
+            // 👉 AJUSTE REALIZADO AQUI: Mapeamento defensivo para trazer o responsável pelo registro da ocorrência (user ou users)
+            ...("user" in prisma.occurrence.fields
+            ? { user: { select: { name: true } } }
+            : { users: { select: { name: true } } }),
+            // 👉 AJUSTE REALIZADO AQUI: Traz o histórico de acompanhamentos pedagógicos em ordem cronológica mapeando dinamicamente a tabela
+            ...("educationalGuidance" in prisma.occurrence.fields
+            ? {
+                educationalGuidance: {
+                    orderBy: { id: "asc" },
+                    include: {
+                    user: { select: { name: true, profile: true } },
+                    },
+                },
+                }
+            : "educationalGuidances" in prisma.occurrence.fields
+                ? {
+                    educationalGuidances: {
+                    orderBy: { id: "asc" },
+                    include: {
+                        user: { select: { name: true, profile: true } },
+                    },
+                    },
+                }
+                : {}),
         },
         },
+    };
+
+    const student = await prisma.student.findUnique({
+        where: { id },
+        include: includeCondition, //* Passa o objeto flexibilizado sem travar o compilador
     });
 
     if (!student) return null;
@@ -72,15 +97,46 @@ export class StudentService {
 
     if (totalOccurrences >= 3 && totalOccurrences <= 4) {
         status = "Atenção";
-    } 
-    
+    }
+
     if (totalOccurrences >= 5) {
         status = "Encaminhamento Pedagógico";
     }
-    
+
+    //* Formatação das ocorrências limpando o campo de gravidade e mapeando providências, status da ocorrência, ciência e histórico de acompanhamentos
+    const formattedOccurrences = student.occurrences.map((occ: any) => {
+        const acompanhamentosRaw =
+        occ.educationalGuidance || occ.educationalGuidances || [];
+
+        return {
+            id: occ.id,
+            type: occ.type,
+            description: occ.description,
+            data: occ.registrationDate || occ.created_at || occ.createdAt,
+            responsavel: occ.user?.name || occ.users?.name || "N/A",
+            measuresTaken:
+            occ.measuresTaken || "Nenhum registro de providência adotada.",
+            status: occ.status || "ABERTO",
+            //* Identifica se a equipe já tomou ciência com base no histórico de acompanhamentos
+            acknowledged: acompanhamentosRaw.some((a: any) =>
+                a.description?.toLowerCase().includes("tomou ciência"),
+            )
+            ? "CIENTE"
+            : "PENDENTE",
+            historicoAcompanhamentos: acompanhamentosRaw.map((a: any) => ({
+                id: a.id,
+                texto: a.description,
+                data: a.registrationDate || a.createdAt,
+                autor: a.user?.name || "N/A",
+                perfilAutor: a.user?.profile || "N/A",
+            })),
+        };
+    });
+
     //* Retorna a ficha unificada completa
     return {
         ...student,
+        occurrences: formattedOccurrences, //* Lista formatada com a nova regra de exibição
         status_disciplinar: status,
     };
     }
