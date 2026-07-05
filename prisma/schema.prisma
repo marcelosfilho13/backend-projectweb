@@ -1,10 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -14,94 +10,121 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id Int @id @default(autoincrement())
-  name String
-  email String @unique
-  password String
-  perfil   String  
-  status String @default("PENDENTE") //* Pode ser: PENDENTE | ATIVO | RECUSADO
-  dataCreated DateTime @default(now()) @map("data_created")
+//* ENUMS: Garantem consistência total dos dados, evitando strings inválidas
+enum UserStatus {
+  PENDENTE
+  ATIVO
+  RECUSADO
+}
 
-  incidents Occurrence[]
-  nextSteps EducationalGuidance[]
+enum OccurrenceStatus {
+  ABERTA            @map("Aberta")
+  EM_ACOMPANHAMENTO @map("Em Acompanhamento")
+  CONCLUIDA         @map("Concluída")
+}
+
+//* ==========================================
+//* MODELS
+//* ==========================================
+
+model User {
+  id          Int        @id @default(autoincrement())
+  name        String
+  email       String     @unique
+  password    String
+  perfil      String     
+  status      UserStatus @default(PENDENTE) 
+  createdAt   DateTime   @default(now()) @map("created_at")
+
+  //* Relações virtuais (Tabelas relacionadas)
+  incidents            Occurrence[]
+  educationalGuidances EducationalGuidance[]
 
   @@map("users")
 }
 
 model Course {
-  id Int @id @default(autoincrement())
-  name String
+  id          Int      @id @default(autoincrement())
+  name        String
   description String
-  dataCreated DateTime @default(now()) @map("data_created")
 
-  classes Class[]
+  classes     Class[]
 
   @@map("courses")
 }
 
 model Class {
-  id Int @id @default(autoincrement())
-  name String
-  courses_Id Int @map("courses_Id")
+  id        Int      @id @default(autoincrement())
+  name      String
+  courseId  Int      @map("course_id") //* Padronizado camelCase no código, snake no banco
 
-  course Course @relation(fields: [courses_Id], references: [id], onDelete: Cascade)
-  students Student[]
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  students  Student[]
 
   @@map("classes")
 }
 
 model Student {
-  id Int @id @default(autoincrement())
-  name String
-  class_Id Int @map("class_Id")
+  id           Int      @id @default(autoincrement())
+  name         String
+  registration String   @unique //* Matrícula única do aluno
+  classId      Int      @map("class_id")
 
-  class Class @relation(fields: [class_Id], references: [id], onDelete: Cascade)
+  class        Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
 
-  responsibles Responsible[]
-  occurrences  Occurrence[]
+  responsibles         Responsible[]
+  occurrences          Occurrence[]
   educationalGuidances EducationalGuidance[]
 
   @@map("students")
 }
 
 model Responsible {
-  id Int @id @default(autoincrement())
-  name String
-  kinship String
+  id        Int      @id @default(autoincrement())
+  name      String
+  kinship   String
   telephone String
-  email String
-  students_Id Int @map("students_Id")
+  email     String
+  studentId Int      @map("student_id")
 
-  students Student @relation(fields: [students_Id], references: [id], onDelete: Cascade)
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@map("responsibles")
 }
 
 model Occurrence {
-  id Int @id @default(autoincrement())
-  type String
-  gravity String
-  description String @db.Text 
-  registrationDate DateTime @default(now()) @map("registration_date")
-  students_Id Int @map("students_Id")
-  users_Id Int @map("users_Id")
+  id               Int              @id @default(autoincrement())
+  type             String
+  gravity          String
+  description      String           @db.Text 
+  registrationDate DateTime         @default(now()) @map("registration_date")
+  measuresTaken    String           //* providências
+  status           OccurrenceStatus @default(ABERTA) //* Agora usa o Enum seguro
+  acknowledged     Boolean          @default(false) 
+  acknowledgedBy   String?          //* cientePor (opcional)
+  acknowledgedAt   DateTime?        @map("acknowledged_at") //* Corrigido o typo e adicionado @map
+  studentId        Int              @map("student_id")
+  userId           Int              @map("user_id")
 
-  students Student @relation(fields: [students_Id], references: [id], onDelete: Cascade)
-  users User @relation(fields: [users_Id], references: [id], onDelete: Cascade)
+  student          Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  educationalGuidances EducationalGuidance[]
 
   @@map("occurrences")
 }
 
 model EducationalGuidance {
-  id Int @id @default(autoincrement())
-  description String @db.Text
-  registrationDate DateTime @default(now()) @map("registration_date")
-  users_Id Int @map("users_Id")
-  students_Id Int @map("students_Id")
+  id               Int        @id @default(autoincrement())
+  description      String     @db.Text
+  registrationDate DateTime   @default(now()) @map("registration_date")
+  userId           Int        @map("user_id")
+  studentId        Int        @map("student_id")
+  occurrenceId     Int        @map("occurrence_id")
 
-  users User @relation(fields: [users_Id], references: [id])
-  students Student @relation(fields: [students_Id], references: [id], onDelete: Cascade)
-
+  user             User       @relation(fields: [userId], references: [id])
+  student          Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  occurrence       Occurrence @relation(fields: [occurrenceId], references: [id])  
+  
   @@map("educational_guidances")
 }
