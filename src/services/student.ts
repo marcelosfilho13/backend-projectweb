@@ -1,71 +1,87 @@
 import { prisma } from "../database/prismaClient";
 
 interface listStudentsFilters {
-  courses_Id?: number;
-  class_Id?: number;
-  search?: string;
+    courses_Id?: number;
+    class_Id?: number;
+    search?: string;
 }
 
 export class StudentService {
-  // * Método para listar estudantes com base em filtros opcionais
-  async listStudents(filters: listStudentsFilters) {
+  //* RF03 — Consulta de Alunos (Listagem do lado esquerdo da tela)
+    async listStudents(filters: listStudentsFilters) {
     const whereCondition: any = {};
 
     if (filters.courses_Id) whereCondition.courses_Id = filters.courses_Id;
     if (filters.class_Id) whereCondition.class_Id = filters.class_Id;
 
-    // * Se houver um termo de pesquisa, adiciona uma condição para buscar por nome ou email
+    // * Adiciona busca flexível por nome ou matrícula (conforme RF03)
     if (filters.search) {
-      whereCondition.OR = [
+        whereCondition.OR = [
         { name: { contains: filters.search, mode: "insensitive" } },
-        { email: { contains: filters.search, mode: "insensitive" } },
-      ];
+        //* Tenta buscar no campo registration/enrollment. Usamos mapeamento seguro via any
+        { registration: { contains: filters.search, mode: "insensitive" } },
+        ];
     }
 
-    // * Retorna a lista de estudantes com base nos filtros aplicados, ordenada por nome
-    return await prisma.student.findMany({
-      where: whereCondition,
-      select: {
+    //* Retorna a lista trazendo dados mínimos, incluindo curso e turma para exibição direta
+    const students = await prisma.student.findMany({
+        where: whereCondition,
+        select: {
         id: true,
         name: true,
-        class_Id: true,
-      },
-      orderBy: { name: "asc" }, // * Ordena os estudantes por nome em ordem alfabética
+        [prisma.student.fields ? "registration" : "id"]: true,
+        course: {
+            select: { name: true },
+        },
+        class: {
+            select: { name: true },
+        },
+        },
+        orderBy: { name: "asc" }, //* Ordena os estudantes por nome em ordem alfabética
     });
-  }
 
-  // * Método para obter detalhes de um estudante específico pelo ID
-  async getStudentDetails(id: number) {
+    return students;
+    }
+
+    //* RF04 — Visualização da Ficha do Aluno (Detalhes do lado direito da tela)
+    async getStudentDetails(id: number) {
     const student = await prisma.student.findUnique({
-      where: { id },
-      include: {
+        where: { id },
+        include: {
         course: true,
         class: true,
-        responsibles: true,
+        responsibles: true, //* Responsáveis (RF04)
         occurrences: {
-          orderBy: { type: "desc" }, // Ordena as ocorrências do estudante por data em ordem decrescente
+            orderBy: {
+            //* Tentativa dinâmica usando as colunas prováveis do banco mapeadas anteriormente
+            [prisma.occurrence.fields ? "created_at" : "id"]: "desc",
+            },
+            include: {
+            //* Inclui dados de acompanhamento/ciência para o card expansível do front-end
+            users: { select: { name: true } }, //* Responsável pela ocorrência
+            },
         },
-      },
+        },
     });
 
-    if (!student) return null; // Retorna null se o estudante não for encontrado
+    if (!student) return null;
 
-    // * RN04 Aplicação de regras de negócio para determinar o status do estudante com base no número de ocorrências
+    // * RN04: Determinar o nível de atenção disciplinar com base nas ocorrências
     const totalOccurrences = student.occurrences.length;
     let status: "Normal" | "Atenção" | "Encaminhamento Pedagógico" = "Normal";
 
     if (totalOccurrences >= 3 && totalOccurrences <= 4) {
-      status = "Atenção"; // * RN04: Nível de atenção
-    }
-
+        status = "Atenção";
+    } 
+    
     if (totalOccurrences >= 5) {
-      status = "Encaminhamento Pedagógico"; // * RN04: Encaminhamento pedagógico
+        status = "Encaminhamento Pedagógico";
     }
-
-    // * Retorna os detalhes do estudante junto com o status calculado
+    
+    //* Retorna a ficha unificada completa
     return {
-      ...student,
-      status,
+        ...student,
+        status_disciplinar: status,
     };
-  }
+    }
 }
