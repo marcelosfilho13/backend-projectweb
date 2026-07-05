@@ -1,83 +1,109 @@
 import { prisma } from "../database/prismaClient";
 
-interface CreatePedagogicalGuidanceDTO {
-  description: string;
-  registrationDate: string | Date; // Permite receber a string do front e tratar ou salvar direto
-  students_Id: number;
-  users_Id: number;
+interface CreateFollowUpDTO {
+    description: string;
+    occurrences_Id: number; 
+    users_Id: number; //* Identifica quem registrou o acompanhamento
 }
 
 export class PedagogicalGuidanceService {
-  //* 1. Filtrar e listar a fila de alunos em risco (Atenção / Encaminhamento / Alertas Graves)
-  async getAttentionQueue() {
-    const studentsInAttention = await prisma.student.findMany({
-      include: {
-        course: { select: { name: true } },
-        class: { select: { name: true } },
-        occurrences: {
-          select: {
-            id: true,
-            type: true,
-            gravity: true,
-            description: true,
-            createdAt: true,
-          },
-        },
-      },
+  //* RF07 — Obter Detalhes do Painel de Acompanhamento de uma Ocorrência Específica
+    async getOccurrenceDetailsForPanel(occurrenceId: number) {
+    const occurrence = await prisma.occurrence.findUnique({
+            where: { id: occurrenceId },
+            include: {
+            students: {
+                select: {
+                id: true,
+                name: true,
+                registration: true,
+                course: { select: { name: true } },
+                class: { select: { name: true } },
+                },
+            },
+            user: { select: { name: true } }, //* Quem registrou a ocorrência originalmente
+            //* Traz o histórico completo de acompanhamentos já registrados para essa ocorrência específica
+            educationalGuidance: {
+                orderBy: { id: "asc" }, //* Histórico em ordem cronológica
+                include: {
+                user: { select: { name: true, profile: true } }, //* Quem fez o acompanhamento
+                },
+            },
+            },
     });
 
-    const attentionQueue = studentsInAttention
-      .map((student) => {
-        const totalOccurrences = student.occurrences.length;
-
-        const hasSevereAlert = student.occurrences.some(
-          (occurrence) => occurrence.gravity.toLowerCase() === "grave",
-        );
-        let status: "Normal" | "Atenção" | "Encaminhamento Pedagógico" =
-          "Normal";
-
-        if (totalOccurrences >= 3 && totalOccurrences <= 4) {
-          status = "Atenção"; // * RN04: Nível de atenção
-        }
-
-        if (totalOccurrences >= 5) {
-          status = "Encaminhamento Pedagógico"; // * RN04: Encaminhamento pedagógico
-        }
-
-        return {
-          id: student.id,
-          name: student.name,
-          course: student.course,
-          class: student.class.name,
-          totalOccurrencer: totalOccurrences,
-          status,
-          hasSevereAlert,
-        };
-      })
-      .filter(
-        (student) => student.status !== "Normal" || student.hasSevereAlert,
-      );
-
-    return attentionQueue;
-  }
-
-  //* 2. Criar um registro de orientação pedagógica para um estudante específico
-  async create(data: CreatePedagogicalGuidanceDTO) {
-    const studentExists = await prisma.student.findUnique({
-      where: { id: data.students_Id },
-    });
-
-    if (!studentExists) {
-      throw new Error("Estudante não encontrado.");
+    if (!occurrence) {
+        throw new Error("Ocorrência não encontrada.");
     }
 
-    return await prisma.educationalGuidance.create({
-      data: {
-        description: data.description,
-        registrationDate: data.registrationDate,
-        students_Id: data.students_Id,
-        users_Id: data.users_Id,
-      },
-    });
-  }
+    return occurrence;
+    }
+
+  //* RF07 — Registrar Acompanhamento em Texto Livre e/ou Atualizar Status
+    async addFollowUp(data: CreateFollowUpDTO, newStatus?: string) {
+    //* Verificar se a ocorrência existe
+        const occurrenceExists = await prisma.occurrence.findUnique({
+            where: { id: data.occurrences_Id },
+        });
+
+        if (!occurrenceExists) {
+            throw new Error("Ocorrência não encontrada.");
+        }
+
+        //* Transação do Prisma para salvar o texto e atualizar o status da ocorrência simultaneamente
+        return await prisma.$transaction(async (tx) => {
+        //* Identifica o nome correto do modelo/tabela no Prisma de forma segura
+            const guidanceModel = ('educationalGuidance' in tx) 
+            ? (tx as any).educationalGuidance 
+            : (tx as any).educationalGuidances || (tx as any).pedagogicalGuidance;
+
+            if (!guidanceModel) {
+            throw new Error("Tabela de acompanhamento pedagógico não encontrada no Prisma Client.");
+            }
+
+            //* Cria o registro de texto livre no histórico usando o modelo mapeado dinamicamente
+            const followUp = await guidanceModel.create({
+            data: {
+                description: data.description,
+                registrationDate: new Date(),
+                occurrences_Id: data.occurrences_Id,
+                students_Id: occurrenceExists.students_Id,
+                users_Id: data.users_Id,
+            },
+            include: { user: { select: { name: true } } }
+            });
+            
+            if (newStatus) {
+            const occurrenceModel =
+                "occurrence" in tx ? (tx as any).occurrence : (tx as any).occurrences; // Fallback caso esteja no plural no seu schema
+
+            if (occurrenceModel) {
+                await occurrenceModel.update({
+                where: { id: data.occurrences_Id },
+                data: { status: newStatus },
+                });
+            }
+            }
+
+            return followUp;
+        });
+    }
+
+  //* RF07 — Tomar Ciência da Ocorrência (Ação exclusiva do Setor Pedagógico)
+    async takeAcknowledge(occurrenceId: number, userId: number) {
+        const occurrence = await prisma.occurrence.findUnique({
+            where: { id: occurrenceId },
+        });
+        if (!occurrence) throw new Error("Ocorrência não encontrada.");
+
+        //* Cria uma mensagem automática no histórico registrando a ciência pedagógica
+        return await this.addFollowUp(
+            {
+            occurrences_Id: occurrenceId,
+            users_Id: userId,
+            description: "Equipe Pedagógica tomou ciência desta ocorrência.",
+            },
+            "EM_ANALISE",
+        ); //* já move o status automaticamente para Em Análise
+    }
 }

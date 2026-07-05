@@ -1,53 +1,113 @@
-import {Request, Response} from "express";
-import {PedagogicalGuidanceService} from "../services/pedagogical";
+import { Request, Response } from "express";
+import { PedagogicalGuidanceService } from "../services/pedagogical";
 
 const pedagogicalGuidanceService = new PedagogicalGuidanceService();
 
 export class PedagogicalController {
-    //* GET /api/v1/pedagogical/attention
-    async getQueue(req: Request, res: Response) {
+  //* Tela 5 — Carrega todos os dados do Painel ao abrir uma ocorrência específica
+    async getPanelDetails(req: Request, res: Response) {
         try {
-            const queue = await pedagogicalGuidanceService.getAttentionQueue();
-            return res.status(200).json(queue);
-        } catch (error) {
-            console.error("🚨 Error in PedagogicalController.getQueue:", error);
-            return res.status(500).json({ error: "Internal Server Error" });
+            const { occurrenceId } = req.params;
+
+            if (!occurrenceId) {
+            return res
+                .status(400)
+                .json({ error: "O ID da ocorrência é obrigatório." });
+            }
+
+            const panelDetails =
+            await pedagogicalGuidanceService.getOccurrenceDetailsForPanel(
+                Number(occurrenceId),
+            );
+
+            return res.status(200).json(panelDetails);
+        } catch (error: any) {
+            console.error(
+            "🚨 Error in PedagogicalController.getPanelDetails:",
+            error,
+            );
+            if (error.message === "Ocorrência não encontrada.") {
+            return res.status(404).json({ error: error.message });
+            }
+            return res
+            .status(500)
+            .json({ error: "Erro ao carregar o painel de acompanhamento." });
         }
     }
 
-    //* POST /api/v1/pedagogical/fowarding
-    async storeForwarding(req: Request, res: Response) {
+  //* Tela 5 — Registrar acompanhamento em texto livre e atualizar status (Pedagógico e Admin)
+    async storeFollowUp(req: Request, res: Response) {
         try {
-            const { students_Id, description } = req.body;
-            const users_Id = req.user?.id; //! Garantindo que o ID do usuário autenticado seja usado
+            const { occurrenceId } = req.params;
+            const { description, status } = req.body; //* status opcional enviado pelo combo/select da tela
 
-            if (!users_Id) {
-                return res.status(401).json({ error: "Sessão inválida ou utilizador não identificado." });
+            const userId = (req as any).userId || req.user?.id;
+
+            if (!userId) {
+            return res
+                .status(401)
+                .json({ error: "Sessão inválida ou utilizador não identificado." });
             }
 
-            if (!students_Id || !description) {
-                return res.status(400).json({ error: "Todos os campos do encaminhamento são obrigatórios." });
+            if (!description) {
+            return res
+                .status(400)
+                .json({
+                    error: "O texto de descrição do acompanhamento é obrigatório.",
+                });
             }
 
-            const forwarding = await pedagogicalGuidanceService.create({
+            const followUp = await pedagogicalGuidanceService.addFollowUp(
+            {
                 description,
-                registrationDate: new Date(),
-                students_Id,
-                users_Id,
-            });
+                occurrences_Id: Number(occurrenceId),
+                users_Id: Number(userId),
+            },
+            status ? String(status) : undefined,
+            );
 
             return res.status(201).json({
-                message: "Encaminhamento pedagógico registrado com sucesso",
-                data: forwarding
+                message: "Acompanhamento registrado com sucesso.",
+                data: followUp,
             });
-        } catch(error: any) {
-            console.error("🚨 Error in PedagogicalController.storeForwarding:", error);
+        } catch (error: any) {
+            console.error("🚨 Error in PedagogicalController.storeFollowUp:", error);
+            if (error.message === "Ocorrência não encontrada.") {
+                return res.status(404).json({ error: error.message });
+            }
+            return res
+            .status(500)
+            .json({ error: "Erro ao registrar o acompanhamento." });
+        }
+    }
 
-            if (error.message === "Estudante não encontrado") {
-                return res.status(404).json({ error: "O estudante alvo deste encaminhamento não foi localizado." });
-            } 
+    //* Tela 5 — Ação rápida de "Tomar Ciência" (Apenas Setor Pedagógico)
+    async acknowledge(req: Request, res: Response) {
+        try {
+            const { occurrenceId } = req.params;
+            const userId = (req as any).userId || req.user?.id;
 
-            return res.status(500).json({ error: "Internal Server Error" });
+            if (!userId) {
+                return res.status(401).json({ error: "Usuário não autenticado." });
+            }
+
+            const acknowledgment = await pedagogicalGuidanceService.takeAcknowledge(
+            Number(occurrenceId),
+            Number(userId),
+            );
+
+            return res.status(200).json({
+                message: "Ciência registrada com sucesso no histórico da ocorrência.",
+                data: acknowledgment,
+            });
+        } catch (error: any) {
+            console.error("🚨 Error in PedagogicalController.acknowledge:", error);
+            if (error.message === "Ocorrência não encontrada.") {
+                return res.status(404).json({ error: error.message });
+            }
+            return res
+            .status(500)
+            .json({ error: "Erro ao registrar tomada de ciência." });
         }
     }
 }
