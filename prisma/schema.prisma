@@ -19,7 +19,8 @@ model User {
   name String
   email String @unique
   password String
-  perfil String
+  perfil   String  
+  status String @default("PENDENTE") //* Pode ser: PENDENTE | ATIVO | RECUSADO
   dataCreated DateTime @default(now()) @map("data_created")
 
   incidents Occurrence[]

@@ -24,12 +24,13 @@ export class CreateUserService {
 
     // * Salvar no banco de dados o usuário com a senha criptografada.
     const user = await prisma.user.create({
-        data: {
-            name,
-            email,
-            password: hashedPassword,
-            perfil, //* Armazena o perfil: "Setor Pedagógico" || "Servidor"
-        },
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        perfil, //* Sem perfil até o admin aprovar
+        status: "PENDENTE", //* Garante que o perfil nasce pendente e travado até autorização do Admin
+      },
     });
 
     //*  Por segurança, a senha não deve ser retornada na resposta.

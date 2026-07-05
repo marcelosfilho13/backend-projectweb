@@ -18,11 +18,12 @@ export class UserController {
     public async login(req: Request, res: Response) {
         const { email, password } = req.body;
         const authenticateUserService = new AuthenticateUserService();
-        try {
-            const result = await authenticateUserService.execute({ email, password });
-            return res.status(200).json(result);
-        } catch (error: any) {
-            return res.status(400).json({ error: error.message });
-        }
+
+    try {
+        const result = await (authenticateUserService.execute as any)({ email, password,});
+        return res.status(200).json(result);
+    } catch (error: any) {
+        return res.status(401).json({ error: error.message });
+    }
     }
 }

@@ -3,8 +3,8 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 interface IRequest {
-  email: string;
-  password: string;
+    email: string;
+    password: string;
 }
 
 export class AuthenticateUserService {
@@ -20,31 +20,43 @@ export class AuthenticateUserService {
         throw new Error("Usuário ou senha incorretos.");
     }
 
-    //* Comparar senha enviada com senha criptografada no banco de dados.
-    const passwordMatch = await bcrypt.compare(password, user.password);
+    const dbUser = user as any;
 
+    //* Comparar senha enviada com senha criptografada no banco de dados.
+    const passwordMatch = await bcrypt.compare(password, dbUser.password);
+    
     if (!passwordMatch) {
         throw new Error("Usuário ou senha incorretos.");
     }
 
+    //* Validação dos Status de Moderação
+    if (dbUser.status === "PENDENTE") {
+        throw new Error("Sua solicitação de acesso está aguardando aprovação do administrador.");
+    }
+
+    if (dbUser.status === "RECUSADO") {
+        throw new Error("Sua solicitação de acesso foi recusada.");
+    }
+
     const secret = process.env.JWT_SECRET as string;
     const token = jwt.sign(
-    { 
-        id: user.id, //* Adicionado o ID numérico aqui no payload do token
-        perfil: user.perfil 
-    }, 
-    secret, 
-    {
-        subject: String(user.id), //* O subject exige formato string por padrão da RFC
+        {
+        id: dbUser.id, //* ID numérico no payload
+        perfil: dbUser.perfil,
+        },
+        secret,
+        {
+        subject: String(dbUser.id),
         expiresIn: "1d",
-    }
+        },
     );
 
     return {
         user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
+            id: dbUser.id,
+            name: dbUser.name,
+            email: dbUser.email,
+            status: dbUser.status,
         },
         token,
     };
