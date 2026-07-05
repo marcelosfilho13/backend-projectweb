@@ -18,18 +18,21 @@ interface CreateClassDTO {
 }
 export class AdminService {
     //* ABA 1: ALUNOS (Cadastrar e Remover)
-
     async createStudent(data: CreateStudentDTO) {
+        const { name, registration, class_Id } = data;
+
         return await prisma.student.create({
-        data: {
-            name: data.name,
-            //* Procura dinamicamente o nome do campo de matrícula (registration ou enrollment)
-            ...("registration" in prisma.student.fields
-            ? { registration: data.registration }
-            : { enrollment: data.registration }),
-            courses_Id: data.courses_Id,
-            class_Id: data.class_Id,
-        },
+            data: {
+            name: name,
+            registration: registration,
+
+            class: {
+                connect: {
+                //* Conecta o aluno ao ID numérico da turma enviado no Insomnia
+                id: Number(class_Id),
+                },
+            },
+            },
         });
     }
 
@@ -40,20 +43,20 @@ export class AdminService {
         return await prisma.student.delete({ where: { id } });
     }
 
-  //* ABA 2: CURSOS & TURMAS (Cadastrar e Remover)
+    //* ABA 2: CURSOS & TURMAS (Cadastrar e Remover)
     async createCourse(data: CreateCourseDTO) {
         const courseData: any = {
-        name: data.name,
+            name: data.name,
         };
 
-        //* Verifica dinamicamente se o campo description existe no modelo antes de atribuir
+    //* Verifica dinamicamente se o campo description existe no modelo antes de atribuir
         if ("description" in prisma.course.fields) {
         courseData.description = data.description || ""; // Garante uma string vazia caso venha undefined para não quebrar a obrigatoriedade
         }
 
         return await prisma.course.create({
-        data: courseData,
-        });
+                data: courseData,
+            });
     }
 
     async deleteCourse(id: number) {
@@ -61,21 +64,20 @@ export class AdminService {
     }
 
     async createClass(data: CreateClassDTO) {
-    // 👉 AJUSTE REALIZADO AQUI: Criando o objeto como 'any' e injetando dinamicamente o mapeamento de chave estrangeira aceito pelo seu banco
-    const classData: any = {
-        name: data.name,
-        ...("courses_Id" in prisma.class.fields
-        ? { courses_Id: data.courses_Id }
-        : { courseId: data.courses_Id }),
-    };
+        const classData: any = {
+            name: data.name,
+            ...("courses_Id" in prisma.class.fields
+            ? { courses_Id: data.courses_Id }
+            : { courseId: data.courses_Id }),
+        };
 
-    return await prisma.class.create({
-        data: classData,
-    });
+        return await prisma.class.create({
+            data: classData,
+        });
     }
 
     async deleteClass(id: number) {
-    return await prisma.class.delete({ where: { id } });
+        return await prisma.class.delete({ where: { id } });
     }
 
   //* ABA 3: USUÁRIOS (Aprovar, Recusar e Remover)
@@ -101,26 +103,17 @@ export class AdminService {
         });
     }
 
-    //* Aprovar usuário definindo seu perfil de acesso final   
-    async approveUser(id: number, finalProfile: string) {
-        const userExists = await prisma.user.findUnique({ where: { id } });
-        if (!userExists) throw new Error("Usuário não encontrado.");
-
-        const userFields = prisma.user.fields;
-        const updateData: any = {};
-
-        // Injeta o perfil (Role) escolhido pelo Administrador
-        if ("profile" in userFields) updateData.profile = finalProfile;
-        if ("role" in userFields) updateData.role = finalProfile;
-
-        //* Altera o status de aprovação baseado nos campos do seu banco
-        if ("status" in userFields) updateData.status = "ATIVO";
-        if ("approved" in userFields) updateData.approved = true;
-        if ("active" in userFields) updateData.active = true;
-
+  //* Aprovar usuário definindo seu perfil de acesso final
+    async approveUser({ userId, perfil }: { userId: number; perfil: string }) {
         return await prisma.user.update({
-            where: { id },
-            data: updateData,
+            where: {
+            id: Number(userId), // Garante que o ID é um número
+            },
+            data: {
+            //* Altera o status para ATIVO 
+            ...("status" in prisma.user.fields ? { status: "ATIVO" } : {}),
+            perfil: perfil, //* Salva o Perfil
+            },
         });
     }
 

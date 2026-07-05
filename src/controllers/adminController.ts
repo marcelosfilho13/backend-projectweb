@@ -167,9 +167,9 @@ export class AdminController {
     async updateApproval(req: Request, res: Response) {
     try {
         const { id } = req.params;
-        const { profile } = req.body; // Perfil final que o Administrador definiu (ex: "Setor Pedagógico")
+        const { perfil } = req.body; // Perfil final que o Administrador definiu (ex: "Setor Pedagógico")
 
-        if (!profile) {
+        if (!perfil) {
         return res
             .status(400)
             .json({
@@ -178,10 +178,10 @@ export class AdminController {
             });
         }
 
-        const approvedUser = await adminService.approveUser(
-            Number(id),
-            String(profile),
-        );
+        const approvedUser = await adminService.approveUser({
+            userId: Number(id),
+            perfil: String(perfil), 
+        });
         return res
         .status(200)
         .json({

@@ -9,38 +9,46 @@ interface listStudentsFilters {
 export class StudentService {
     //* RF03 — Consulta de Alunos (Listagem do lado esquerdo da tela)
     async listStudents(filters: listStudentsFilters) {
-    const whereCondition: any = {};
+        const whereCondition: any = {};
 
-    if (filters.courses_Id) whereCondition.courses_Id = filters.courses_Id;
-    if (filters.class_Id) whereCondition.class_Id = filters.class_Id;
+        if (filters.courses_Id) whereCondition.courses_Id = filters.courses_Id;
+        if (filters.class_Id) whereCondition.class_Id = filters.class_Id;
 
-    // * Adiciona busca flexível por nome ou matrícula (conforme RF03)
-    if (filters.search) {
-        whereCondition.OR = [
-        { name: { contains: filters.search, mode: "insensitive" } },
-        //* Tenta buscar no campo registration/enrollment. Usamos mapeamento seguro via any
-        { registration: { contains: filters.search, mode: "insensitive" } },
-        ];
-    }
+        // * Adiciona busca flexível por nome ou matrícula (conforme RF03)
+        if (filters.search) {
+            whereCondition.OR = [
+            { name: { contains: filters.search, mode: "insensitive" } },
+            //* Tenta buscar no campo registration/enrollment. Usamos mapeamento seguro via any
+            { registration: { contains: filters.search, mode: "insensitive" } },
+            ];
+        }
 
-    //* Retorna a lista trazendo dados mínimos, incluindo curso e turma para exibição direta
-    const students = await prisma.student.findMany({
-        where: whereCondition,
-        select: {
-        id: true,
-        name: true,
-        [prisma.student.fields ? "registration" : "id"]: true,
-        course: {
-            select: { name: true },
-        },
-        class: {
-            select: { name: true },
-        },
-        },
-        orderBy: { name: "asc" }, //* Ordena os estudantes por nome em ordem alfabética
-    });
+        //* Retorna a lista trazendo dados mínimos, incluindo curso e turma para exibição direta
+        const students = await prisma.student.findMany({
+            where: {},
+            select: {
+            id: true,
+            name: true,
+            registration: true,
+            class: {
+            select: {
+                name: true, // Nome da Turma
+                ...("course" in (prisma as any).class?.fields || true ? {
+                course: {
+                    select: {
+                    name: true // Nome do Curso vindo da relação da Turma
+                    }
+                }
+                } : {})
+            }
+            }
+            },
+            orderBy: {
+                name: "asc"
+            }
+            } as any); // Adicionamos 'as any' para o TypeScript não chiar com o select dinâmico
 
-    return students;
+        return students;
     }
 
   //* RF04 — Visualização da Ficha do Aluno (Detalhes do lado direito da tela)

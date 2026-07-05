@@ -28,7 +28,7 @@ export class CreateUserService {
         name,
         email,
         password: hashedPassword,
-        perfil, //* Sem perfil até o admin aprovar
+        perfil: "PENDENTE", //* Sem perfil até o admin aprovar
         status: "PENDENTE", //* Garante que o perfil nasce pendente e travado até autorização do Admin
       },
     });

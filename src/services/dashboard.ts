@@ -26,7 +26,7 @@ export class DashboardService {
                 where: {
                 ...occurrenceWhere,
                 //* Acessando o Enum diretamente através da instância do seu cliente centralizado
-                status: "ABERTO",
+                status: "ABERTA",
                 },
             }),
             ]);
@@ -37,8 +37,18 @@ export class DashboardService {
         //* Regra de Negócio: Cards visíveis somente para o perfil Administrador
         if (userPerfil === "Administrador") {
             const [coursesCount, classesCount] = await Promise.all([
-            prisma.course.count(),
-            prisma.class.count(),
+                // Query 1: Total de alunos
+                prisma.student.count({ where: whereCondition }),
+
+                // Query 2: Total de ocorrências
+                prisma.occurrence.count({ where: occurrenceWhere }),
+
+                // 👉 Query 3: Tipando o objeto inteiro como 'any' para forçar a compilação
+                prisma.occurrence.count({
+                where: {
+                    status: "ABERTA",
+                },
+                } as any),
             ]);
             totalCourses = coursesCount;
             totalClasses = classesCount;
