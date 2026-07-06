@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { AdminController } from "../../controllers/adminController.js";
-import { checkRole } from "../../middlewares/rbac";
-import { ensureAuthenticated } from "../../middlewares/ensureAuthenticated";
+import { checkRole } from "../../middlewares/rbac.js";
+import { ensureAuthenticated } from "../../middlewares/ensureAuthenticated.js";
 
 const adminRoutes = Router();
 const adminController = new AdminController();

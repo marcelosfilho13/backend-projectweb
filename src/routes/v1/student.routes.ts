@@ -1,7 +1,7 @@
 import {Router} from "express";
 import { StudentController } from "../../controllers/studentController.js";
-import {checkRole} from "../../middlewares/rbac"
-import { ensureAuthenticated } from "../../middlewares/ensureAuthenticated";
+import {checkRole} from "../../middlewares/rbac.js"
+import { ensureAuthenticated } from "../../middlewares/ensureAuthenticated.js";
 
 const studentRoutes = Router();
 const studentController = new StudentController();

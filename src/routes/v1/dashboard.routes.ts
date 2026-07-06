@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { DashboardController } from "../../controllers/dashboardController.js";
-import { checkRole } from "../../middlewares/rbac";
-import { ensureAuthenticated } from "../../middlewares/ensureAuthenticated";
+import { checkRole } from "../../middlewares/rbac.js";
+import { ensureAuthenticated } from "../../middlewares/ensureAuthenticated.js";
 
 const dashboardRoutes = Router();
 const dashboardController = new DashboardController();
