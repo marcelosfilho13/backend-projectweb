@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { DashboardController } from "../../controllers/dashboardController";
+import { DashboardController } from "../../controllers/dashboardController.js";
 import { checkRole } from "../../middlewares/rbac";
 import { ensureAuthenticated } from "../../middlewares/ensureAuthenticated";
 

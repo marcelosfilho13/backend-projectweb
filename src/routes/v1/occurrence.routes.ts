@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { OccurrenceController } from "../../controllers/occurrenceController"
+import { OccurrenceController } from "../../controllers/occurrenceController.js"
 import { checkRole } from "../../middlewares/rbac";
 import { ensureAuthenticated } from "../../middlewares/ensureAuthenticated";
 

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { AdminController } from "../../controllers/adminController";
+import { AdminController } from "../../controllers/adminController.js";
 import { checkRole } from "../../middlewares/rbac";
 import { ensureAuthenticated } from "../../middlewares/ensureAuthenticated";
 

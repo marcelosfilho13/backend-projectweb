@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { PedagogicalController } from "../../controllers/pedagogicalController";
+import { PedagogicalController } from "../../controllers/pedagogicalController.js";
 import { checkRole } from "../../middlewares/rbac";
 import { ensureAuthenticated } from "../../middlewares/ensureAuthenticated"; // 2. Descomentado e sincronizado
 

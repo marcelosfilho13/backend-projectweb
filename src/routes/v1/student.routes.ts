@@ -1,5 +1,5 @@
 import {Router} from "express";
-import { StudentController } from "../../controllers/studentController";
+import { StudentController } from "../../controllers/studentController.js";
 import {checkRole} from "../../middlewares/rbac"
 import { ensureAuthenticated } from "../../middlewares/ensureAuthenticated";
 
