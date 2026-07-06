@@ -11,7 +11,6 @@ export class StudentService {
     async listStudents(filters: listStudentsFilters) {
         const whereCondition: any = {};
 
-        // 🟢 Ajustado filtros para respeitar a estrutura relacional do seu banco
         if (filters.class_Id) {
         whereCondition.classId = Number(filters.class_Id);
         }
@@ -33,7 +32,7 @@ export class StudentService {
 
         //* Retorna a lista trazendo dados mínimos, incluindo curso e turma para exibição direta
         const students = await prisma.student.findMany({
-            where: whereCondition, // 🟢 Aplicado a condição de busca estruturada acima
+            where: whereCondition, 
             select: {
             id: true,
             name: true,

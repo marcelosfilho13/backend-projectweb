@@ -73,7 +73,8 @@ export class OccurrenceService {
       ];
     }
 
-    return await prisma.occurrence.findMany({
+    //* Busca os dados no banco incluindo a tabela de acompanhamentos pedagógicos no plural
+    const occurrences = await prisma.occurrence.findMany({
       where: whereCondition,
       include: {
         student: {
@@ -89,27 +90,38 @@ export class OccurrenceService {
           },
         },
         user: {
-          select: { name: true }, //* Responsável pelo registro
+          select: { name: true }, //* Responsável pelo registro inicial
+        },
+        
+        educationalGuidances: {
+          include: {
+            user: { select: { name: true } }, //* Nome de quem escreveu o acompanhamento
+          },
         },
       },
       orderBy: {
         id: "desc", //* Mais recentes primeiro
       },
     } as any);
-  }
 
-  //* RN03 — Excluir Ocorrência
-  async delete(id: number) {
-    const occurrenceExists = await prisma.occurrence.findUnique({
-      where: { id },
-    });
+    //* MAPEAMENTO DINÂMICO: Calcula os campos virtuais em tempo real para cada ocorrência
+    return occurrences.map((occ: any) => {
+      //* Procura se existe algum texto de ciência no histórico desta ocorrência
+      const scienceRow = occ.educationalGuidances?.find((g: any) =>
+        g.description?.toLowerCase().includes("tomou ciência"),
+      );
 
-    if (!occurrenceExists) {
-      throw new Error("Ocorrência não encontrada.");
-    }
+      return {
+        ...occ,
+        // Removemos o histórico bruto do retorno para o JSON ficar limpo se preferir,
+        // ou mantém comentando a linha abaixo caso queira listar os textos na tela:
+        educationalGuidances: undefined,
 
-    return await prisma.occurrence.delete({
-      where: { id },
+        // Injeta os dados calculados que estavam vindo zerados:
+        acknowledged: !!scienceRow, // Fica true se achar o texto, false se não achar
+        acknowledgedBy: scienceRow ? scienceRow.user?.name : null, // Nome de quem tomou ciência
+        acknowledgedAt: scienceRow ? scienceRow.registrationDate : null, // Data exata da ciência
+      };
     });
   }
 }
