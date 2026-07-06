@@ -1,6 +1,6 @@
     import { Request, Response } from "express";
-    import { OccurrenceService } from "../services/occurrence";
-    import { prisma } from "../database/prismaClient";
+    import { OccurrenceService } from "../services/occurrence.js";
+    import { prisma } from "../database/prismaClient.js";
 
     const occurrenceService = new OccurrenceService();
 

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { PedagogicalGuidanceService } from "../services/pedagogical";
+import { PedagogicalGuidanceService } from "../services/pedagogical.js";
 
 const pedagogicalGuidanceService = new PedagogicalGuidanceService();
 
