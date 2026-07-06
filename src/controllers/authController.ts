@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { AuthenticateUserService } from "../services/authenticateUserService";
-import { CreateUserService } from "../services/createUserService"; 
+import { AuthenticateUserService } from "../services/authenticateUserService.js"; 
+import { CreateUserService } from "../services/createUserService.js";
 
 export class AuthController {
     async login(req: Request, res:Response){
