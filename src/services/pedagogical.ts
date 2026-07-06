@@ -1,4 +1,4 @@
-    import { prisma } from "../database/prismaClient";
+    import { prisma } from "../database/prismaClient.js";
 
     // Certifique-se de que a interface CreateFollowUpDTO esteja importada ou declarada aqui:
     interface CreateFollowUpDTO {

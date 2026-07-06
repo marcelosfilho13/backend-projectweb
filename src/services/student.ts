@@ -1,4 +1,4 @@
-import { prisma } from "../database/prismaClient";
+import { prisma } from "../database/prismaClient.js";
 
 interface listStudentsFilters {
     courses_Id?: number;
