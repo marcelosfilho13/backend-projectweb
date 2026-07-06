@@ -1,10 +1,10 @@
-import {Router} from "express";
-import { authRoutes } from "./auth.routes";
-import { studentRoutes } from "./v1/student.routes";
-import { occurrenceRoutes } from "./v1/occurrence.routes";
-import { dashboardRoutes } from "./v1/dashboard.routes";
-import { pedagogicalRoutes } from "./v1/pedagogical.routes";
-import { adminRoutes } from "./v1/admin.routes";
+import { Router } from "express";
+import { authRoutes } from "./auth.routes.js";
+import { studentRoutes } from "./v1/student.routes.js";
+import { occurrenceRoutes } from "./v1/occurrence.routes.js";
+import { dashboardRoutes } from "./v1/dashboard.routes.js";
+import { pedagogicalRoutes } from "./v1/pedagogical.routes.js";
+import { adminRoutes } from "./v1/admin.routes.js";
 
 const appRoutes = Router();
 
@@ -14,6 +14,6 @@ appRoutes.use("/students", studentRoutes);
 appRoutes.use("/occurrences", occurrenceRoutes);
 appRoutes.use("/dashboard", dashboardRoutes);
 appRoutes.use("/pedagogical", pedagogicalRoutes);
-appRoutes.use("/admin", adminRoutes)
+appRoutes.use("/admin", adminRoutes);
 
 export { appRoutes };
