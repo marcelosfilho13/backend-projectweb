@@ -4,6 +4,6 @@ import { CourseController } from "../../controllers/courseController.js";
 const courseRoutes = Router();
 const courseController = new CourseController();
 
-courseRoutes.get("/", courseController.list);
+courseRoutes.get("/courses", courseController.list);
 
 export { courseRoutes };
