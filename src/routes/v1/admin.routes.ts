@@ -21,11 +21,17 @@ adminRoutes.delete("/students/:id", adminController.destroyStudent);
 
 //*ABA 2: CURSOS & TURMAS
 
+// * GET /api/v1/admin/courses - Listar Cursos
+adminRoutes.get("/courses", adminController.getCourses); 
+
 // * POST /api/v1/admin/courses - Cadastrar Curso
 adminRoutes.post("/courses", adminController.storeCourse);
 
 // * DELETE /api/v1/admin/courses/:id - Remover Curso
 adminRoutes.delete("/courses/:id", adminController.destroyCourse);
+
+// * GET /api/v1/admin/classes - Listar Turmas
+adminRoutes.get("/classes", adminController.getClasses);
 
 // * POST /api/v1/admin/classes - Cadastrar Turma
 adminRoutes.post("/classes", adminController.storeClass);
