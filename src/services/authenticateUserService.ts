@@ -57,6 +57,7 @@ export class AuthenticateUserService {
             name: dbUser.name,
             email: dbUser.email,
             status: dbUser.status,
+            perfil: dbUser.perfil
         },
         token,
     };
