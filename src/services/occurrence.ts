@@ -15,6 +15,30 @@ interface ListOccurrencesFilters {
 }
 
 export class OccurrenceService {
+  // *Listar alunos com seus respectivos cursos e turmas
+  async listStudentsForOccurrences() {
+    return await prisma.student.findMany({
+      select: {
+        id: true,
+        name: true,
+        registration: true,
+        class: {
+          select: {
+            id: true,
+            name: true,
+            course: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { name: "asc" },
+    });
+  }
+
   //* RF05 — Criar Registro de Ocorrência
   async create(data: CreateOccurrenceDTO) {
     //* RN01: Validar se o estudante existe
@@ -92,7 +116,7 @@ export class OccurrenceService {
         user: {
           select: { name: true }, //* Responsável pelo registro inicial
         },
-        
+
         educationalGuidances: {
           include: {
             user: { select: { name: true } }, //* Nome de quem escreveu o acompanhamento

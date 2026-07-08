@@ -5,6 +5,13 @@
     const occurrenceService = new OccurrenceService();
 
     export class OccurrenceController {
+      //* Método para o endpoint de listagem preparatória de estudantes
+      async getStudents(request: Request, response: Response) {
+        const occurrenceService = new OccurrenceService();
+        const students = await occurrenceService.listStudentsForOccurrences();
+        return response.json(students);
+      }
+
       //* RF05 — Criar Registro de Ocorrência (Exclusivo Administrador)
       async create(req: Request, res: Response) {
         try {
@@ -95,4 +102,4 @@
           where: { id },
         });
       }
-}
+    }

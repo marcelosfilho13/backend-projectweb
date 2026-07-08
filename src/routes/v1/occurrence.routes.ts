@@ -6,6 +6,13 @@ import { ensureAuthenticated } from "../../middlewares/ensureAuthenticated.js";
 const occurrenceRoutes = Router();
 const occurrenceController = new OccurrenceController();
 
+occurrenceRoutes.get(
+  "/students",
+  ensureAuthenticated,
+  checkRole(["Administrador", "Setor Pedagógico", "Servidor"]),
+  occurrenceController.getStudents,
+);
+
 //* POST /api/v1/occurrences/create - Criar uma nova ocorrência disciplinar
 //* RF05 / RN01 / RN02: Ação exclusiva do perfil Administrador
 occurrenceRoutes.post(
